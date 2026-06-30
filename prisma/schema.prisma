@@ -1,0 +1,263 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Pace {
+  ALL_PACES
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum RunStatus {
+  SCHEDULED
+  CANCELLED
+  COMPLETED
+}
+
+model User {
+  id             String            @id @default(cuid())
+  name           String?
+  email          String            @unique
+  emailVerified  DateTime?
+  image          String?
+  city           String?
+  isSuperAdmin   Boolean           @default(false)
+  createdAt      DateTime          @default(now())
+  accounts       Account[]
+  sessions       Session[]
+  memberships    ClubMember[]
+  attendances    RunAttendee[]
+  ownedClubs     Club[]            @relation("ClubOwner")
+  adminAuditLogs AdminAuditLog[]   @relation("AdminActor")
+}
+
+model AdminAuditLog {
+  id        String   @id @default(cuid())
+  actorId   String
+  actor     User     @relation("AdminActor", fields: [actorId], references: [id])
+  action    String
+  targetId  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([actorId])
+  @@index([createdAt])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model City {
+  id     String  @id @default(cuid())
+  name   String  @unique
+  slug   String  @unique
+  region String?
+  lat    Float?
+  lng    Float?
+  clubs  Club[]
+  races  Race[]
+}
+
+model Club {
+  id            String         @id @default(cuid())
+  slug          String         @unique
+  name          String
+  description   String         @db.Text
+  logoUrl       String?
+  coverUrl      String?
+  instagramUrl  String?
+  stravaUrl     String?
+  website       String?
+  cityId        String
+  city          City           @relation(fields: [cityId], references: [id])
+  pace          Pace           @default(ALL_PACES)
+  frequency     Int            @default(1)
+  usesPlatform  Boolean        @default(false)
+  verified      Boolean        @default(false)
+  ownerId       String
+  owner         User           @relation("ClubOwner", fields: [ownerId], references: [id])
+  types         ClubType[]
+  awards        ClubAward[]
+  members       ClubMember[]
+  runs          Run[]
+  recurringRuns RecurringRun[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([cityId])
+  @@index([pace])
+}
+
+model RunTypeTag {
+  id    String     @id @default(cuid())
+  key   String     @unique
+  emoji String
+  label String
+  clubs ClubType[]
+  runs  RunType[]
+}
+
+model ClubType {
+  clubId String
+  typeId String
+  club   Club       @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  type   RunTypeTag @relation(fields: [typeId], references: [id], onDelete: Cascade)
+
+  @@id([clubId, typeId])
+}
+
+model ClubAward {
+  id        String   @id @default(cuid())
+  clubId    String
+  club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  key       String
+  label     String
+  icon      String
+  awardedAt DateTime @default(now())
+}
+
+model ClubMember {
+  id       String     @id @default(cuid())
+  clubId   String
+  userId   String
+  role     MemberRole @default(MEMBER)
+  club     Club       @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt DateTime   @default(now())
+
+  @@unique([clubId, userId])
+}
+
+model RecurringRun {
+  id          String   @id @default(cuid())
+  clubId      String
+  club        Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  title       String
+  description String?  @db.Text
+  weekday     Int
+  time        String
+  location    String
+  lat         Float?
+  lng         Float?
+  distanceKm  Float?
+  pace        String?
+  types       String[]
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  runs        Run[]
+}
+
+model Run {
+  id                String        @id @default(cuid())
+  slug              String        @unique
+  clubId            String
+  club              Club          @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  recurringRunId    String?
+  recurringRun      RecurringRun? @relation(fields: [recurringRunId], references: [id])
+  title             String
+  description       String?       @db.Text
+  startAt           DateTime
+  location          String
+  lat               Float?
+  lng               Float?
+  distanceKm        Float?
+  pace              String?
+  status            RunStatus     @default(SCHEDULED)
+  signupType        String        @default("internal")
+  externalSignupUrl String?
+  organizerName     String?
+  organizerRole     String?
+  priceCents        Int?
+  types             RunType[]
+  attendees         RunAttendee[]
+  createdAt         DateTime      @default(now())
+
+  @@index([startAt])
+  @@index([clubId])
+}
+
+model RunType {
+  runId  String
+  typeId String
+  run    Run        @relation(fields: [runId], references: [id], onDelete: Cascade)
+  type   RunTypeTag @relation(fields: [typeId], references: [id], onDelete: Cascade)
+
+  @@id([runId, typeId])
+}
+
+model RunAttendee {
+  id       String   @id @default(cuid())
+  runId    String
+  userId   String
+  run      Run      @relation(fields: [runId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt DateTime @default(now())
+
+  @@unique([runId, userId])
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  city      String?
+  createdAt DateTime @default(now())
+}
+
+model Race {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  cityId      String
+  city        City     @relation(fields: [cityId], references: [id])
+  date        DateTime
+  description String?  @db.Text
+  distances   String[]
+  isPopular   Boolean  @default(false)
+  status      String   @default("upcoming")
+  externalUrl String?
+  createdAt   DateTime @default(now())
+
+  @@index([cityId])
+}

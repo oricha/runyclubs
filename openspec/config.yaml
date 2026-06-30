@@ -1,0 +1,47 @@
+schema: spec-driven
+
+context: |
+  Proyecto: RunClubs.es — directorio social para descubrir clubs de running y
+  carreras grupales en las ciudades más importantes de España (NO Países Bajos).
+
+  Stack: Next.js (App Router) + React + TypeScript + Tailwind CSS + shadcn/ui +
+  Prisma + PostgreSQL (Supabase/Neon) + NextAuth (magic link + Google) +
+  lucide-react + next/font (Instrument Serif + Inter). Despliegue en Vercel
+  (incl. Vercel Cron). Clima vía Open-Meteo. Pagos vía Stripe (fase monetización).
+
+  Idioma de producto: español (locale es_ES). Toda la UI en español.
+
+  Estética: minimalista, cálida, editorial. Fondo blanco hueso (#FBFAF9),
+  titulares serif (Instrument Serif, cursiva parcial), cuerpo Inter, botones
+  oscuros tipo pill (#1C1A17), acento rojo oscuro de marca (#3B1414).
+
+  Convenciones:
+  - Rutas y slugs en español (/carreras, /clubs, /ciudad/[ciudad], /competiciones,
+    /anunciate, /onboarding/club, /acceso, /cuenta, /blog).
+  - Filtros sincronizados con query params (compartibles e indexables).
+  - i18n centralizado en lib/i18n/es.ts.
+  - Datos de clubs/carreras propios y ficticios (no copiar datos reales del .nl).
+  - SEO first: JSON-LD (Event, SportsClub, FAQPage), sitemap dinámico, ISR.
+  - Admin en /login: ruta oculta sin enlaces, solo superadmin.
+
+  Documentos fuente (raíz del repo):
+  - 1-runclubs-es-especificacion.md
+  - 2-runclubs-es-documento-tecnico.md
+  - 3-runclubs-es-contenido-datos.md
+  - 4-runclubs-es-analisis-completo-nuevas-secciones.md
+  - 5-runclubs-es-monetizacion.md
+  - 6-Finals-recomendation
+  - PRD-runclubs-es.md (PRD maestro, generado desde PROMPT-PRD.md)
+
+# Per-artifact rules
+rules:
+  proposal:
+    - Escribe en español.
+    - Incluye siempre una sección "Non-goals" cuando aplique.
+    - Vincula el change con la fase del ROADMAP y el documento fuente relevante.
+  tasks:
+    - Escribe en español.
+    - Agrupa por capas (datos, API, UI, SEO, tests) y trocea en tareas de <= 2h.
+  design:
+    - Escribe en español.
+    - Documenta decisiones clave de modelado, endpoints y SEO/JSON-LD.
