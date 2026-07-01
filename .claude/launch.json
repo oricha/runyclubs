@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "runclub-dev",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["/Users/zion/.nvm/versions/node/v22.21.1/bin/npm", "run", "dev"],
+      "port": 3000,
+      "autoPort": false
+    }
+  ]
+}

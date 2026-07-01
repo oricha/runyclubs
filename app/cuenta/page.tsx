@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { AccountHeader } from "@/components/account/AccountHeader";
 import { ClubMembershipCard } from "@/components/account/ClubMembershipCard";
 import { RunAttendanceCard } from "@/components/account/RunAttendanceCard";
+import { UpgradeClubCard } from "@/components/billing/UpgradeClubCard";
 import { Container } from "@/components/common/Container";
 import { SectionLabel } from "@/components/common/SectionLabel";
 import { Button } from "@/components/ui/button";
@@ -16,14 +17,19 @@ export const metadata: Metadata = {
   title: `${es.account.title} | RunClubs.es`,
 };
 
-export default async function CuentaPage() {
+type PageProps = {
+  searchParams: Promise<{ checkout?: string; club?: string }>;
+};
+
+export default async function CuentaPage({ searchParams }: PageProps) {
   const session = await auth();
   if (!session?.user) redirect("/acceso");
 
+  const { checkout } = await searchParams;
   const userId = session.user.id;
   const now = new Date();
 
-  const [user, memberships, attendances] = await Promise.all([
+  const [user, memberships, ownedClubs, attendances] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       select: { city: true, name: true },
@@ -38,6 +44,19 @@ export default async function CuentaPage() {
             name: true,
             logoUrl: true,
             city: { select: { name: true, slug: true } },
+          },
+        },
+      },
+      orderBy: { joinedAt: "desc" },
+    }),
+    prisma.clubMember.findMany({
+      where: { userId, role: "OWNER" },
+      include: {
+        club: {
+          select: {
+            slug: true,
+            name: true,
+            subscription: { select: { tier: true } },
           },
         },
       },
@@ -66,11 +85,31 @@ export default async function CuentaPage() {
     .sort((a, b) => a.run.startAt.getTime() - b.run.startAt.getTime());
   const pastRuns = attendances.filter((a) => a.run.startAt < now);
 
+  const checkoutBanner =
+    checkout === "success"
+      ? es.billing.checkoutSuccess
+      : checkout === "canceled"
+        ? es.billing.checkoutCanceled
+        : null;
+
   return (
     <Container className="py-10">
       <SectionLabel as="p" className="mb-2">
         {es.account.title}
       </SectionLabel>
+
+      {checkoutBanner ? (
+        <div
+          className={`mb-6 rounded-xl border px-4 py-3 text-sm ${
+            checkout === "success"
+              ? "border-primary/30 bg-primary/5 text-foreground"
+              : "border-border bg-muted/50 text-muted-foreground"
+          }`}
+          role="status"
+        >
+          {checkoutBanner}
+        </div>
+      ) : null}
 
       <AccountHeader
         name={user?.name ?? session.user.name ?? null}
@@ -79,8 +118,30 @@ export default async function CuentaPage() {
         city={user?.city ?? null}
       />
 
+      {ownedClubs.length > 0 ? (
+        <section className="mt-12">
+          <h2 className="font-serif text-xl">{es.billing.myPlans}</h2>
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+            {ownedClubs.map((m) => (
+              <li key={m.club.slug}>
+                <UpgradeClubCard
+                  clubSlug={m.club.slug}
+                  clubName={m.club.name}
+                  tier={m.club.subscription?.tier ?? "FREE"}
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       <section className="mt-12">
-        <h2 className="font-serif text-xl">{es.account.myClubs}</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-serif text-xl">{es.account.myClubs}</h2>
+          <Button asChild variant="link" className="h-auto p-0">
+            <Link href="/precios">{es.billing.pricingLabel}</Link>
+          </Button>
+        </div>
         {memberships.length === 0 ? (
           <div className="mt-4 rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center">
             <p className="text-muted-foreground">{es.account.myClubsEmpty}</p>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { inter, instrumentSerif } from "./fonts";
 import { Header } from "@/components/layout/Header";
+import { CookieBanner } from "@/components/legal/CookieBanner";
 import { Footer } from "@/components/layout/Footer";
 import { FeedbackWidget } from "@/components/layout/FeedbackWidget";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -82,6 +83,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main className="pt-24">{children}</main>
           <Footer />
           <FeedbackWidget />
+          <CookieBanner />
         </TooltipProvider>
       </body>
     </html>

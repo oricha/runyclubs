@@ -25,6 +25,12 @@ enum RunStatus {
   COMPLETED
 }
 
+enum PlanTier {
+  FREE
+  PRO
+  BUSINESS
+}
+
 model User {
   id             String            @id @default(cuid())
   name           String?
@@ -123,11 +129,25 @@ model Club {
   members       ClubMember[]
   runs          Run[]
   recurringRuns RecurringRun[]
+  subscription  Subscription?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
   @@index([cityId])
   @@index([pace])
+}
+
+model Subscription {
+  id               String    @id @default(cuid())
+  clubId           String    @unique
+  club             Club      @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  tier             PlanTier  @default(FREE)
+  stripeCustomerId String?
+  stripeSubId      String?
+  status           String    @default("active")
+  currentPeriodEnd DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }
 
 model RunTypeTag {
