@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { Prisma } from "@prisma/client";
 import { redirect } from "next/navigation";
 
 import { AssignOwnerForm } from "@/components/admin/AssignOwnerForm";
@@ -22,6 +23,10 @@ const ACTION_LABELS: Record<string, string> = {
   "club.enable": es.admin.actionEnable,
   "club.assign_owner": es.admin.actionAssignOwner,
 };
+
+type AuditLogEntry = Prisma.AdminAuditLogGetPayload<{
+  include: { actor: { select: { email: true } } };
+}>;
 
 function formatAuditDate(date: Date): string {
   return new Intl.DateTimeFormat("es-ES", {
@@ -55,7 +60,7 @@ export default async function AdminPage() {
   ]);
 
   const targetIds = auditLog
-    .map((entry) => entry.targetId)
+    .map((entry: AuditLogEntry) => entry.targetId)
     .filter((id): id is string => Boolean(id));
   const targetClubs =
     targetIds.length > 0
@@ -149,7 +154,7 @@ export default async function AdminPage() {
                   </td>
                 </tr>
               ) : (
-                auditLog.map((entry) => (
+                auditLog.map((entry: AuditLogEntry) => (
                   <tr key={entry.id} className="border-b border-border last:border-0">
                     <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
                       {formatAuditDate(entry.createdAt)}
