@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { MailCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { es } from "@/lib/i18n/es";
+
+export const metadata: Metadata = {
+  title: "Verificar acceso",
+  robots: { index: false, follow: false },
+};
 
 export default function VerificarPage() {
   return (

@@ -7,5 +7,5 @@ const { auth } = NextAuth(authConfig);
 export default auth;
 
 export const config = {
-  matcher: ["/cuenta/:path*", "/onboarding/:path*", "/admin/:path*"],
+  matcher: ["/cuenta/:path*", "/onboarding/:path*", "/admin/:path*", "/anunciate"],
 };

@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { LoginPanel } from "./LoginPanel";
+
+export const metadata: Metadata = {
+  title: "Acceso",
+  robots: { index: false, follow: false },
+};
 
 function resolveRedirectTo(params: {
   next?: string;

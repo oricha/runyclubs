@@ -6,7 +6,17 @@ import { Calendar, Search, User } from "lucide-react";
 import type { Session } from "next-auth";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { es } from "@/lib/i18n/es";
+import { CITY_DETAILS } from "@/lib/cities";
 import { SearchModal } from "@/components/search/SearchModal";
 
 function getInitials(name?: string | null, email?: string | null): string {
@@ -26,13 +36,14 @@ export function HeaderClient({ session }: { session: Session | null }) {
   const user = session?.user;
   const accountHref = user ? "/cuenta" : "/acceso";
   const accountLabel = user ? es.nav.account : es.nav.login;
+  const addClubHref = user ? "/onboarding/club" : "/acceso?next=/onboarding/club";
 
   return (
     <>
       <header className="pointer-events-none fixed inset-x-0 top-4 z-50 flex justify-center px-4">
         <nav
-          className="pointer-events-auto flex items-center gap-6 rounded-full border border-border
-                      bg-background/80 px-5 py-2.5 shadow-sm backdrop-blur-md"
+          className="pointer-events-auto flex items-center gap-4 rounded-full border border-border
+                      bg-background/80 px-5 py-2.5 shadow-sm backdrop-blur-md sm:gap-6"
         >
           <Link href="/" className="text-lg font-black tracking-tight">
             RUNCLUBS<sup className="text-[10px]">®</sup>
@@ -44,15 +55,37 @@ export function HeaderClient({ session }: { session: Session | null }) {
             <Link href="/clubs" className="hover:opacity-70">
               {es.nav.clubs}
             </Link>
+            <Link
+              href={addClubHref}
+              className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:opacity-90"
+            >
+              {es.nav.addClub}
+            </Link>
           </div>
           <div className="flex items-center gap-1">
-            <Link
-              href="/calendarios"
-              aria-label={es.nav.calendars}
-              className="rounded-full p-2 hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <Calendar size={18} />
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                aria-label={es.nav.calendars}
+                className="rounded-full p-2 hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <Calendar size={18} />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>{es.nav.citiesMenu}</DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className="max-h-64 w-52">
+                    {CITY_DETAILS.map((city) => (
+                      <DropdownMenuItem key={city.slug} asChild>
+                        <Link href={`/ciudades/${city.slug}`}>{city.name}</Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                <DropdownMenuItem asChild>
+                  <Link href="/carreras">{es.nav.runsMenu}</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
